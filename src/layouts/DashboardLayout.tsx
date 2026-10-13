@@ -9,12 +9,13 @@ export default function DashboardLayout() {
   const { pathname } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const closeMobile = useCallback(() => setMobileOpen(false), []);
-
-  /* Every route change: close the drawer and reset scroll */
-  useEffect(() => {
+  const closeMobile = useCallback(() => {
     setMobileOpen(false);
-    window.scrollTo({ top: 0 });
+  }, []);
+
+  /* Reset scroll when the route changes */
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
   }, [pathname]);
 
   return (
@@ -27,10 +28,16 @@ export default function DashboardLayout() {
       </a>
 
       <div className="flex min-h-screen">
-        <DashboardSidebar mobileOpen={mobileOpen} onMobileClose={closeMobile} />
+        <DashboardSidebar
+          key={pathname}
+          mobileOpen={mobileOpen}
+          onMobileClose={closeMobile}
+        />
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <DashboardHeader onMenuClick={() => setMobileOpen(true)} />
+          <DashboardHeader
+            onMenuClick={() => setMobileOpen(true)}
+          />
 
           <main
             id="main-content"

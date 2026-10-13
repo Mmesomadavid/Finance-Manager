@@ -11,6 +11,10 @@ import Signup from "./pages/Auth/Signup";
 // Dashboard layout
 import DashboardLayout from "./layouts/DashboardLayout";
 import DashboardHome from "./pages/Dashboard/DashboardHome";
+import DashboardAccounts from "./pages/Dashboard/Accounts";
+import DashboardTransactions from "./pages/Dashboard/Transactions";
+import DashboardBudgets from "./pages/Dashboard/Budgets";
+import DashboardSettings from "./pages/Dashboard/Settings";
 
 function App() {
   return (
@@ -22,11 +26,11 @@ function App() {
 
       <Route path="/dashboard" element={<DashboardLayout />}>
         <Route index element={<DashboardHome />} />
-        {/* <Route path="accounts" element={<Accounts />} />
-        <Route path="transactions" element={<Transactions />} />
-        <Route path="budgets" element={<Budgets />} />
-        <Route path="settings" element={<Settings />} />
-        <Route path="support" element={<div>Help & Support</div>} /> */}
+        <Route path="accounts" element={<DashboardAccounts />} />
+        <Route path="transactions" element={<DashboardTransactions />} />
+        <Route path="budgets" element={<DashboardBudgets />} />
+        <Route path="settings" element={<DashboardSettings />} />
+        <Route path="support" element={<div>Help & Support</div>} />
       </Route>
 
       <Route

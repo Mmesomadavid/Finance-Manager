@@ -56,13 +56,38 @@ const flow: FlowRow[] = [
 ];
 
 /** Expenses are negative so the bar chart can mirror them below the zero line. */
-const barData = flow.map((row) => ({ ...row, expenses: -row.expenses }));
-const netFlow = flow.reduce((sum, row) => sum + row.income - row.expenses, 0);
+const barData = flow.map((row) => ({
+  ...row,
+  expenses: -row.expenses,
+}));
+
+const netFlow = flow.reduce(
+  (sum, row) => sum + row.income - row.expenses,
+  0,
+);
 
 const accounts = [
-  { id: "usd", name: "USD Account", brand: "Visa", last4: "1990", balance: 28390.2 },
-  { id: "everyday", name: "Everyday Account", brand: "Mastercard", last4: "8742", balance: 8420.5 },
-  { id: "savings", name: "Savings Account", brand: "Verve", last4: "3361", balance: 3250 },
+  {
+    id: "usd",
+    name: "USD Account",
+    brand: "Visa",
+    last4: "1990",
+    balance: 28390.2,
+  },
+  {
+    id: "everyday",
+    name: "Everyday Account",
+    brand: "Mastercard",
+    last4: "8742",
+    balance: 8420.5,
+  },
+  {
+    id: "savings",
+    name: "Savings Account",
+    brand: "Verve",
+    last4: "3361",
+    balance: 3250,
+  },
 ];
 
 const stats = [
@@ -80,9 +105,36 @@ const breakdown = [
 ];
 
 const payments = [
-  { id: "netflix", name: "Netflix Subscription", date: "Tue, 13 October 10:30 AM", category: "Streaming", amount: "$15.99", initial: "N", bg: "#fde4c8", fg: "#b45309" },
-  { id: "figma", name: "Figma Membership", date: "Wed, 14 October 9:00 AM", category: "Professional", amount: "$24.00", initial: "F", bg: "#e6defc", fg: "#6d28d9" },
-  { id: "internet", name: "Internet Subscription", date: "Fri, 16 October 11:00 AM", category: "Utilities", amount: "$49.00", initial: "I", bg: "#d3effa", fg: "#0e7490" },
+  {
+    id: "netflix",
+    name: "Netflix Subscription",
+    date: "Tue, 13 October 10:30 AM",
+    category: "Streaming",
+    amount: "$15.99",
+    initial: "N",
+    bg: "#fde4c8",
+    fg: "#b45309",
+  },
+  {
+    id: "figma",
+    name: "Figma Membership",
+    date: "Wed, 14 October 9:00 AM",
+    category: "Professional",
+    amount: "$24.00",
+    initial: "F",
+    bg: "#e6defc",
+    fg: "#6d28d9",
+  },
+  {
+    id: "internet",
+    name: "Internet Subscription",
+    date: "Fri, 16 October 11:00 AM",
+    category: "Utilities",
+    amount: "$49.00",
+    initial: "I",
+    bg: "#d3effa",
+    fg: "#0e7490",
+  },
 ];
 
 /* ----------------------------------------------------------------------------
@@ -93,34 +145,47 @@ const hatch = (a: string, b: string) =>
   `repeating-linear-gradient(135deg, ${a} 0 3px, ${b} 3px 7px)`;
 
 const formatAmount = (value: number) =>
-  value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  value.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
 const formatAxis = (value: number) =>
   value === 0 ? "$0" : `$${Math.abs(value) / 1000}k`;
 
+/**
+ * Animates a number without synchronously updating state inside an effect.
+ * Reduced-motion users receive the final value immediately.
+ */
 const useCountUp = (target: number) => {
   const reduceMotion = useReducedMotion();
-  const [value, setValue] = useState(reduceMotion ? target : 0);
+  const [value, setValue] = useState(0);
 
   useEffect(() => {
-    if (reduceMotion) {
-      setValue(target);
-      return;
-    }
+    if (reduceMotion) return;
+
     const controls = animate(0, target, {
       duration: 1,
       ease: "easeOut",
       onUpdate: setValue,
     });
+
     return () => controls.stop();
   }, [target, reduceMotion]);
 
-  return value;
+  return reduceMotion ? target : value;
 };
 
 /** "$78,821" in dark ink with ".88" faded, like the reference. */
-const Money = ({ value, className = "" }: { value: number; className?: string }) => {
+const Money = ({
+  value,
+  className = "",
+}: {
+  value: number;
+  className?: string;
+}) => {
   const [whole, decimals] = formatAmount(value).split(".");
+
   return (
     <span className={`tabular-nums ${className}`}>
       ${whole}
@@ -129,7 +194,13 @@ const Money = ({ value, className = "" }: { value: number; className?: string })
   );
 };
 
-const AnimatedMoney = ({ value, className }: { value: number; className?: string }) => (
+const AnimatedMoney = ({
+  value,
+  className,
+}: {
+  value: number;
+  className?: string;
+}) => (
   <Money value={useCountUp(value)} className={className} />
 );
 
@@ -149,7 +220,11 @@ const Card = ({
   <motion.section
     initial={{ opacity: 0, y: 12 }}
     animate={{ opacity: 1, y: 0 }}
-    transition={{ delay, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+    transition={{
+      delay,
+      duration: 0.45,
+      ease: [0.22, 1, 0.36, 1],
+    }}
     className={`rounded-2xl bg-white p-5 shadow-[0_1px_2px_rgba(20,16,40,0.04)] ${className}`}
   >
     {children}
@@ -173,7 +248,7 @@ const Badge = ({ children }: { children: ReactNode }) => (
 );
 
 /* ----------------------------------------------------------------------------
-   Account switcher (the "··· 1990" pill)
+   Account switcher
 ---------------------------------------------------------------------------- */
 
 const AccountSwitcher = ({
@@ -185,18 +260,25 @@ const AccountSwitcher = ({
 }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
   const current = accounts.find((a) => a.id === value) ?? accounts[0];
 
   useEffect(() => {
     if (!open) return;
+
     const onPointerDown = (event: PointerEvent) => {
-      if (!ref.current?.contains(event.target as Node)) setOpen(false);
+      if (!ref.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
     };
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
     };
+
     document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
+
     return () => {
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
@@ -215,10 +297,16 @@ const AccountSwitcher = ({
         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#ece6fd] text-[#7c4ff0]">
           <CreditCard size={12} />
         </span>
-        <span className="tabular-nums tracking-wide text-[#4d4856]">··· {current.last4}</span>
+
+        <span className="tabular-nums tracking-wide text-[#4d4856]">
+          ··· {current.last4}
+        </span>
+
         <ChevronDown
           size={14}
-          className={`text-[#6f6a78] transition-transform ${open ? "rotate-180" : ""}`}
+          className={`text-[#6f6a78] transition-transform ${
+            open ? "rotate-180" : ""
+          }`}
         />
       </button>
 
@@ -252,7 +340,10 @@ const AccountSwitcher = ({
                       {account.brand} ···· {account.last4}
                     </span>
                   </span>
-                  {account.id === value && <Check size={15} className="text-[#7c4ff0]" />}
+
+                  {account.id === value && (
+                    <Check size={15} className="text-[#7c4ff0]" />
+                  )}
                 </button>
               </li>
             ))}
@@ -278,11 +369,21 @@ type PillProps = {
 };
 
 /** A fully rounded bar. Handles both positive and negative heights. */
-const Pill = ({ x = 0, y = 0, width = 0, height = 0, fill, opacity = 1 }: PillProps) => {
+const Pill = ({
+  x = 0,
+  y = 0,
+  width = 0,
+  height = 0,
+  fill,
+  opacity = 1,
+}: PillProps) => {
   const h = Math.abs(height);
+
   if (!h || !width) return null;
+
   const top = height < 0 ? y + height : y;
   const r = Math.min(width, h) / 2;
+
   return (
     <rect
       x={x}
@@ -327,6 +428,7 @@ const ChartTooltip = ({
   payload?: Array<{ payload: FlowRow }>;
 }) => {
   if (!active || !payload?.length) return null;
+
   const row = payload[0].payload;
 
   return (
@@ -334,13 +436,21 @@ const ChartTooltip = ({
       <p className="text-[13px] font-semibold tabular-nums text-[#14121a]">
         {Math.abs(row.income).toLocaleString("en-US")}
       </p>
+
       <p className="mb-2 mt-0.5 flex items-center gap-1.5 text-[10px] text-[#8e8a97]">
-        <span className="h-1.5 w-1.5 rounded-full" style={{ background: hatch("#d3c8fa", "#efeafd") }} />
+        <span
+          className="h-1.5 w-1.5 rounded-full"
+          style={{
+            background: hatch("#d3c8fa", "#efeafd"),
+          }}
+        />
         Income
       </p>
+
       <p className="text-[13px] font-semibold tabular-nums text-[#14121a]">
         {Math.abs(row.expenses).toLocaleString("en-US")}
       </p>
+
       <p className="mt-0.5 flex items-center gap-1.5 text-[10px] text-[#8e8a97]">
         <span className="h-1.5 w-1.5 rounded-full bg-[#8b5cf6]" />
         Expenses
@@ -352,12 +462,21 @@ const ChartTooltip = ({
 const CashFlowChart = () => {
   const [view, setView] = useState<"bar" | "line">("bar");
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const activeMonth = activeIndex === null ? null : flow[activeIndex]?.month;
+
+  const activeMonth =
+    activeIndex === null ? null : flow[activeIndex]?.month;
 
   const pill = (fill: string) => (props: unknown) => {
     const p = props as PillProps;
     const dimmed = activeMonth && p.payload?.month !== activeMonth;
-    return <Pill {...p} fill={fill} opacity={dimmed ? 0.4 : 1} />;
+
+    return (
+      <Pill
+        {...p}
+        fill={fill}
+        opacity={dimmed ? 0.4 : 1}
+      />
+    );
   };
 
   const axisProps = {
@@ -371,6 +490,7 @@ const CashFlowChart = () => {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-[13px] text-[#9a96a3]">Net cash flow</p>
+
           <div className="mt-1 flex items-center gap-2">
             <AnimatedMoney
               value={netFlow}
@@ -380,7 +500,11 @@ const CashFlowChart = () => {
           </div>
         </div>
 
-        <div role="tablist" aria-label="Chart type" className="flex rounded-xl bg-[#f3f3f6] p-1">
+        <div
+          role="tablist"
+          aria-label="Chart type"
+          className="flex rounded-xl bg-[#f3f3f6] p-1"
+        >
           {(
             [
               { id: "bar", label: "Bar chart", icon: ChartColumn },
@@ -388,6 +512,7 @@ const CashFlowChart = () => {
             ] as const
           ).map((option) => {
             const selected = view === option.id;
+
             return (
               <button
                 key={option.id}
@@ -414,10 +539,13 @@ const CashFlowChart = () => {
         <span className="flex items-center gap-2">
           <span
             className="h-2.5 w-2.5 rounded-full"
-            style={{ background: hatch("#d3c8fa", "#efeafd") }}
+            style={{
+              background: hatch("#d3c8fa", "#efeafd"),
+            }}
           />
           Income
         </span>
+
         <span className="flex items-center gap-2">
           <span className="h-2.5 w-2.5 rounded-full bg-[#8b5cf6]" />
           Expenses
@@ -438,9 +566,25 @@ const CashFlowChart = () => {
               stackOffset="sign"
               margin={{ top: 8, right: 4, left: 0, bottom: 0 }}
               barCategoryGap="18%"
-              onMouseMove={(state: { activeTooltipIndex?: number | string | null }) => {
-                const index = Number(state?.activeTooltipIndex);
-                setActiveIndex(Number.isNaN(index) ? null : index);
+              onMouseMove={(state: {
+                activeTooltipIndex?: number | string | null;
+              }) => {
+                const rawIndex = state?.activeTooltipIndex;
+
+                if (rawIndex == null) {
+                  setActiveIndex(null);
+                  return;
+                }
+
+                const index = Number(rawIndex);
+
+                setActiveIndex(
+                  Number.isInteger(index) &&
+                    index >= 0 &&
+                    index < flow.length
+                    ? index
+                    : null,
+                );
               }}
               onMouseLeave={() => setActiveIndex(null)}
             >
@@ -452,13 +596,30 @@ const CashFlowChart = () => {
                   height="8"
                   patternTransform="rotate(45)"
                 >
-                  <rect width="8" height="8" fill="#f3effe" />
-                  <line x1="0" y1="0" x2="0" y2="8" stroke="#ddd3fb" strokeWidth="3.5" />
+                  <rect
+                    width="8"
+                    height="8"
+                    fill="#f3effe"
+                  />
+                  <line
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="8"
+                    stroke="#ddd3fb"
+                    strokeWidth="3.5"
+                  />
                 </pattern>
               </defs>
 
-              <CartesianGrid stroke="#eeeaf3" strokeDasharray="4 4" vertical={false} />
+              <CartesianGrid
+                stroke="#eeeaf3"
+                strokeDasharray="4 4"
+                vertical={false}
+              />
+
               <XAxis dataKey="month" dy={8} {...axisProps} />
+
               <YAxis
                 width={42}
                 domain={[-20000, 20000]}
@@ -466,20 +627,46 @@ const CashFlowChart = () => {
                 tickFormatter={formatAxis}
                 {...axisProps}
               />
-              <ReferenceLine y={0} stroke="#8b5cf6" strokeDasharray="4 4" />
+
+              <ReferenceLine
+                y={0}
+                stroke="#8b5cf6"
+                strokeDasharray="4 4"
+              />
+
               <Tooltip
                 cursor={<DashedCursor />}
                 content={<ChartTooltip />}
                 allowEscapeViewBox={{ x: false, y: true }}
               />
 
-              <Bar dataKey="income" stackId="flow" maxBarSize={40} shape={pill("url(#incomeHatch)")} />
-              <Bar dataKey="expenses" stackId="flow" maxBarSize={40} shape={pill("#8b5cf6")} />
+              <Bar
+                dataKey="income"
+                stackId="flow"
+                maxBarSize={40}
+                shape={pill("url(#incomeHatch)")}
+              />
+
+              <Bar
+                dataKey="expenses"
+                stackId="flow"
+                maxBarSize={40}
+                shape={pill("#8b5cf6")}
+              />
             </BarChart>
           ) : (
-            <LineChart data={flow} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-              <CartesianGrid stroke="#eeeaf3" strokeDasharray="4 4" vertical={false} />
+            <LineChart
+              data={flow}
+              margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+            >
+              <CartesianGrid
+                stroke="#eeeaf3"
+                strokeDasharray="4 4"
+                vertical={false}
+              />
+
               <XAxis dataKey="month" dy={8} {...axisProps} />
+
               <YAxis
                 width={42}
                 domain={[0, 20000]}
@@ -487,25 +674,39 @@ const CashFlowChart = () => {
                 tickFormatter={formatAxis}
                 {...axisProps}
               />
+
               <Tooltip
-                cursor={{ stroke: "#8b5cf6", strokeDasharray: "3 3" }}
+                cursor={{
+                  stroke: "#8b5cf6",
+                  strokeDasharray: "3 3",
+                }}
                 content={<ChartTooltip />}
               />
+
               <Line
                 type="monotone"
                 dataKey="income"
                 stroke="#c9bafb"
                 strokeWidth={3}
                 dot={false}
-                activeDot={{ r: 5, strokeWidth: 2, stroke: "#fff" }}
+                activeDot={{
+                  r: 5,
+                  strokeWidth: 2,
+                  stroke: "#fff",
+                }}
               />
+
               <Line
                 type="monotone"
                 dataKey="expenses"
                 stroke="#8b5cf6"
                 strokeWidth={3}
                 dot={false}
-                activeDot={{ r: 5, strokeWidth: 2, stroke: "#fff" }}
+                activeDot={{
+                  r: 5,
+                  strokeWidth: 2,
+                  stroke: "#fff",
+                }}
               />
             </LineChart>
           )}
@@ -521,14 +722,27 @@ const CashFlowChart = () => {
 
 const DebitCard = ({ balance }: { balance: number }) => {
   const reduceMotion = useReducedMotion();
-  const rotateX = useSpring(0, { stiffness: 220, damping: 20 });
-  const rotateY = useSpring(0, { stiffness: 220, damping: 20 });
+  const rotateX = useSpring(0, {
+    stiffness: 220,
+    damping: 20,
+  });
+  const rotateY = useSpring(0, {
+    stiffness: 220,
+    damping: 20,
+  });
 
   const handleMove = (event: MouseEvent<HTMLDivElement>) => {
     if (reduceMotion) return;
+
     const rect = event.currentTarget.getBoundingClientRect();
-    rotateY.set(((event.clientX - rect.left) / rect.width - 0.5) * 16);
-    rotateX.set(-((event.clientY - rect.top) / rect.height - 0.5) * 16);
+
+    rotateY.set(
+      ((event.clientX - rect.left) / rect.width - 0.5) * 16,
+    );
+
+    rotateX.set(
+      -((event.clientY - rect.top) / rect.height - 0.5) * 16,
+    );
   };
 
   const reset = () => {
@@ -537,7 +751,10 @@ const DebitCard = ({ balance }: { balance: number }) => {
   };
 
   return (
-    <div style={{ perspective: 800 }} className="shrink-0 self-end">
+    <div
+      style={{ perspective: 800 }}
+      className="shrink-0 self-end"
+    >
       <motion.div
         onMouseMove={handleMove}
         onMouseLeave={reset}
@@ -560,7 +777,9 @@ const DebitCard = ({ balance }: { balance: number }) => {
 
         <div className="relative flex h-full flex-col justify-between p-3">
           <div>
-            <p className="text-right text-[9px] font-semibold">Debit Card</p>
+            <p className="text-right text-[9px] font-semibold">
+              Debit Card
+            </p>
             <p className="mt-3 text-[9px] font-medium tracking-[0.18em]">
               •••• •••• 1990
             </p>
@@ -570,6 +789,7 @@ const DebitCard = ({ balance }: { balance: number }) => {
             <p className="text-[15px] font-bold tabular-nums tracking-tight">
               ${formatAmount(balance)}
             </p>
+
             <div className="mt-1 flex items-center justify-between text-[8px] font-medium">
               <span>Ada Okafor</span>
               <span>12/05</span>
@@ -588,7 +808,9 @@ const DebitCard = ({ balance }: { balance: number }) => {
 export default function DashboardHome() {
   const [accountId, setAccountId] = useState(accounts[0].id);
   const [selectedPayment, setSelectedPayment] = useState(payments[1].id);
-  const account = accounts.find((a) => a.id === accountId) ?? accounts[0];
+
+  const account =
+    accounts.find((a) => a.id === accountId) ?? accounts[0];
 
   return (
     <div className="space-y-5">
@@ -600,7 +822,10 @@ export default function DashboardHome() {
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <AccountSwitcher value={accountId} onChange={setAccountId} />
+            <AccountSwitcher
+              value={accountId}
+              onChange={setAccountId}
+            />
 
             <button
               type="button"
@@ -629,6 +854,7 @@ export default function DashboardHome() {
               <Settings size={15} />
               Manage Balance
             </button>
+
             <button
               type="button"
               className="flex h-10 items-center gap-2 rounded-full bg-[#111014] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#2a2830]"
@@ -646,7 +872,10 @@ export default function DashboardHome() {
         <div className="grid gap-4 md:grid-cols-2 xl:col-start-1 xl:row-start-1 xl:grid-cols-1">
           <Card>
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-[#14121a]">Connected Account</h2>
+              <h2 className="text-sm font-semibold text-[#14121a]">
+                Connected Account
+              </h2>
+
               <button
                 type="button"
                 className="flex items-center gap-1 text-xs text-[#6f6a78] transition-colors hover:text-[#14121a]"
@@ -657,7 +886,9 @@ export default function DashboardHome() {
 
             <div className="rounded-xl bg-[#f6f6f9] p-1.5">
               <div className="flex items-center justify-between px-2.5 py-1.5">
-                <span className="text-xs font-medium text-[#4d4856]">{account.name}</span>
+                <span className="text-xs font-medium text-[#4d4856]">
+                  {account.name}
+                </span>
                 <MoreButton label="Account options" />
               </div>
 
@@ -676,7 +907,9 @@ export default function DashboardHome() {
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <p className="text-[13px] font-semibold text-[#14121a]">{account.brand}</p>
+                    <p className="text-[13px] font-semibold text-[#14121a]">
+                      {account.brand}
+                    </p>
                     <p className="mt-0.5 text-[10px] tracking-wider text-[#8e8a97]">
                       •••• •••• {account.last4}
                     </p>
@@ -693,7 +926,9 @@ export default function DashboardHome() {
 
           <Card delay={0.1}>
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-[#14121a]">Expense Breakdown</h2>
+              <h2 className="text-sm font-semibold text-[#14121a]">
+                Expense Breakdown
+              </h2>
               <MoreButton label="Expense breakdown options" />
             </div>
 
@@ -701,22 +936,37 @@ export default function DashboardHome() {
               {breakdown.map((item, index) => (
                 <div
                   key={item.label}
-                  style={{ flexGrow: item.pct, flexBasis: 0, minWidth: 64 }}
+                  style={{
+                    flexGrow: item.pct,
+                    flexBasis: 0,
+                    minWidth: 64,
+                  }}
                 >
                   <div className="border-l border-[#e6e4eb] pl-2">
-                    <p className="truncate text-[11px] text-[#8e8a97]">{item.label}</p>
+                    <p className="truncate text-[11px] text-[#8e8a97]">
+                      {item.label}
+                    </p>
                     <p className="mt-0.5 text-[13px] font-semibold tabular-nums text-[#14121a]">
                       {item.pct}%
                     </p>
                   </div>
 
                   <motion.div
-                    title={`${item.label}: $${formatAmount((monthlySpend * item.pct) / 100)}`}
+                    title={`${item.label}: $${formatAmount(
+                      (monthlySpend * item.pct) / 100,
+                    )}`}
                     initial={{ opacity: 0, scaleX: 0.6 }}
                     animate={{ opacity: 1, scaleX: 1 }}
-                    transition={{ delay: 0.25 + index * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                    transition={{
+                      delay: 0.25 + index * 0.08,
+                      duration: 0.5,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
                     whileHover={{ scale: 1.04 }}
-                    style={{ background: hatch(item.a, item.b), originX: 0 }}
+                    style={{
+                      background: hatch(item.a, item.b),
+                      originX: 0,
+                    }}
                     className="mt-3 h-11 rounded-full"
                   />
                 </div>
@@ -733,9 +983,14 @@ export default function DashboardHome() {
         {/* Stat cards */}
         <div className="grid gap-4 sm:grid-cols-3 xl:col-span-2 xl:col-start-1 xl:row-start-2">
           {stats.map((stat, index) => (
-            <Card key={stat.label} delay={0.15 + index * 0.05}>
+            <Card
+              key={stat.label}
+              delay={0.15 + index * 0.05}
+            >
               <div className="flex items-start justify-between">
-                <p className="text-[13px] text-[#9a96a3]">{stat.label}</p>
+                <p className="text-[13px] text-[#9a96a3]">
+                  {stat.label}
+                </p>
                 <MoreButton label={`${stat.label} options`} />
               </div>
 
@@ -756,7 +1011,9 @@ export default function DashboardHome() {
           className="flex flex-col xl:col-start-3 xl:row-span-2 xl:row-start-2"
         >
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-[#14121a]">My Cards</h2>
+            <h2 className="text-sm font-semibold text-[#14121a]">
+              My Cards
+            </h2>
             <MoreButton label="Card options" />
           </div>
 
@@ -774,10 +1031,14 @@ export default function DashboardHome() {
               <div>
                 <p className="mb-3 text-[11px] text-[#8e8a97]">
                   Check card availability{" "}
-                  <a href="#" className="font-medium text-[#14121a] underline underline-offset-2">
+                  <a
+                    href="#"
+                    className="font-medium text-[#14121a] underline underline-offset-2"
+                  >
                     here
                   </a>
                 </p>
+
                 <button
                   type="button"
                   className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#2fd0aa] text-xs font-semibold text-[#063d31] transition-colors hover:bg-[#25bc99]"
@@ -793,9 +1054,15 @@ export default function DashboardHome() {
         </Card>
 
         {/* Upcoming payments */}
-        <Card delay={0.25} className="xl:col-span-2 xl:col-start-1 xl:row-start-3">
+        <Card
+          delay={0.25}
+          className="xl:col-span-2 xl:col-start-1 xl:row-start-3"
+        >
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-[#14121a]">Upcoming Payment</h2>
+            <h2 className="text-sm font-semibold text-[#14121a]">
+              Upcoming Payment
+            </h2>
+
             <button
               type="button"
               className="h-8 rounded-full bg-[#111014] px-4 text-xs font-medium text-white transition-colors hover:bg-[#2a2830]"
@@ -804,9 +1071,14 @@ export default function DashboardHome() {
             </button>
           </div>
 
-          <div role="listbox" aria-label="Upcoming payments" className="space-y-1">
+          <div
+            role="listbox"
+            aria-label="Upcoming payments"
+            className="space-y-1"
+          >
             {payments.map((payment) => {
               const selected = selectedPayment === payment.id;
+
               return (
                 <button
                   key={payment.id}
@@ -815,24 +1087,33 @@ export default function DashboardHome() {
                   aria-selected={selected}
                   onClick={() => setSelectedPayment(payment.id)}
                   className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors ${
-                    selected ? "bg-[#f1ecff]" : "hover:bg-[#f7f6fa]"
+                    selected
+                      ? "bg-[#f1ecff]"
+                      : "hover:bg-[#f7f6fa]"
                   }`}
                 >
                   <span
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                    style={{ background: payment.bg, color: payment.fg }}
+                    style={{
+                      background: payment.bg,
+                      color: payment.fg,
+                    }}
                   >
                     {payment.initial}
                   </span>
+
                   <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-[#14121a]">
                     {payment.name}
                   </span>
+
                   <span className="hidden w-52 text-xs text-[#4d4856] md:block">
                     {payment.date}
                   </span>
+
                   <span className="hidden w-28 text-xs font-medium text-[#14121a] sm:block">
                     {payment.category}
                   </span>
+
                   <span className="w-16 text-right text-[13px] font-semibold tabular-nums text-[#14121a]">
                     {payment.amount}
                   </span>
